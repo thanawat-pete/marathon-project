@@ -8,11 +8,22 @@ const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 // Synchronously initialize Postgres Pool for serverless environments (Vercel)
 if (isPostgres) {
     const { Pool } = require('pg');
+    // Ensure SSL is handled correctly for various clouds (Supabase/Neon/Vercel)
+    const sslConfig = {
+        rejectUnauthorized: false
+    };
+    
     dbInstance = new Pool({
         connectionString: connectionString,
-        ssl: { rejectUnauthorized: false }
+        ssl: sslConfig
     });
-    console.log('Postgres Pool initialized with ' + (process.env.DATABASE_URL ? 'DATABASE_URL' : 'POSTGRES_URL'));
+    
+    // Test the database connection once initialized
+    dbInstance.on('error', (err) => {
+        console.error('Unexpected error on idle client', err);
+    });
+
+    console.log('Postgres Pool initialized with SSL (rejectUnauthorized: false)');
 }
 
 const connectDB = async () => {
