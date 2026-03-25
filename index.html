@@ -297,7 +297,10 @@
             const form = document.getElementById('registrationForm');
 
             fetch(`${API_BASE_URL}/config`)
-                .then(r => r.json())
+                .then(r => {
+                    if (!r.ok) throw new Error(`Server error: ${r.status}`);
+                    return r.json();
+                })
                 .then(res => {
                     if(res.success) {
                         catSelect.innerHTML = '<option value="">-- เลือกระยะทาง --</option>';
@@ -316,6 +319,13 @@
                             shipSelect.appendChild(opt);
                         });
                     }
+                })
+                .catch(err => {
+                    console.error('Config Load Error:', err);
+                    catSelect.innerHTML = `<option value="">-- ไม่สามารถโหลดข้อมูลได้ (${err.message}) --</option>`;
+                    msgBox.style.display = 'block';
+                    msgBox.style.backgroundColor = '#fee2e2';
+                    msgBox.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์ กรุณาลองใหม่อีกครั้งภายหลัง';
                 });
 
             form.addEventListener('submit', async (e) => {

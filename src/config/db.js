@@ -1,33 +1,34 @@
-const sqlite3 = require('sqlite3').verbose();
-const { open } = require('sqlite');
 const path = require('path');
 const bcrypt = require('bcrypt');
 
 let dbInstance = null;
-let isPostgres = false;
+let isPostgres = !!(process.env.DATABASE_URL || process.env.POSTGRES_URL);
+const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+
+// Synchronously initialize Postgres Pool for serverless environments (Vercel)
+if (isPostgres) {
+    const { Pool } = require('pg');
+    dbInstance = new Pool({
+        connectionString: connectionString,
+        ssl: { rejectUnauthorized: false }
+    });
+    console.log('Postgres Pool initialized with ' + (process.env.DATABASE_URL ? 'DATABASE_URL' : 'POSTGRES_URL'));
+}
 
 const connectDB = async () => {
     try {
-        if (process.env.DATABASE_URL) {
-            // Postgres (Vercel/Production)
-            const { Pool } = require('pg');
-            dbInstance = new Pool({
-                connectionString: process.env.DATABASE_URL,
-                ssl: { rejectUnauthorized: false }
-            });
-            isPostgres = true;
-            console.log('Postgres database connected successfully!');
-            
-            // Note: On Postgres, we assume the schema is already created via migration or initial setup.
-            // For first-time Vercel setup, the user should run the database.sql script in their Postgres console.
+        if (isPostgres) {
+            // Postgres schema should be managed externally
+            return;
         } else {
             // SQLite (Local Development)
+            const sqlite3 = require('sqlite3').verbose();
+            const { open } = require('sqlite');
             const dbFile = path.resolve(__dirname, '../../database.sqlite');
             dbInstance = await open({
                 filename: dbFile,
                 driver: sqlite3.Database
             });
-            isPostgres = false;
             console.log('SQLite database connected successfully!');
 
             // SQLite table creation logic (Keeping it for local dev)
@@ -102,13 +103,18 @@ const getDB = () => {
             }
         },
         get: async (sql, params = []) => {
-            if (isPostgres) {
-                let i = 1;
-                const pgSql = sql.replace(/\?/g, () => `$${i++}`);
-                const result = await dbInstance.query(pgSql, params);
-                return result.rows[0];
-            } else {
-                return await dbInstance.get(sql, params);
+            try {
+                if (isPostgres) {
+                    let i = 1;
+                    const pgSql = sql.replace(/\?/g, () => `$${i++}`);
+                    const result = await dbInstance.query(pgSql, params);
+                    return result.rows[0];
+                } else {
+                    return await dbInstance.get(sql, params);
+                }
+            } catch (err) {
+                console.error('DB Get Error:', err.message, 'SQL:', sql);
+                throw err;
             }
         },
         run: async (sql, params = []) => {

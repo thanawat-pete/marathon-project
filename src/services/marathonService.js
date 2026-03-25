@@ -48,7 +48,7 @@ const createRegistration = async (data) => {
     if (!runnerId) {
         const runRes = await db.run(
             'INSERT INTO RUNNER (first_name, last_name, date_of_birth, gender, citizen_id, phone, email, address, is_disabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [first_name, last_name, date_of_birth || null, gender, citizen_id || null, phone, email, address, is_disabled ? 1 : 0]
+            [first_name, last_name, date_of_birth || null, gender, citizen_id || null, phone, email, address, !!is_disabled]
         );
         runnerId = runRes.lastID;
     }
