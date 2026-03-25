@@ -26,14 +26,14 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', message: 'Chombueng Marathon API is running' });
 });
 
-// For local development
-if (process.env.NODE_ENV !== 'production') {
-    connectDB().then(() => {
+// Connect DB and Start Server
+connectDB().then(() => {
+    if (process.env.NODE_ENV !== 'production') {
         app.listen(PORT, () => {
             console.log(`Server is running on port ${PORT}`);
         });
-    });
-}
+    }
+});
 
 // Export for Vercel
 module.exports = app;

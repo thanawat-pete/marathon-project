@@ -114,9 +114,18 @@ const getDB = () => {
         run: async (sql, params = []) => {
             if (isPostgres) {
                 let i = 1;
-                const pgSql = sql.replace(/\?/g, () => `$${i++}`);
+                // Add RETURNING if it's an INSERT to get the ID
+                let pgSql = sql.replace(/\?/g, () => `$${i++}`);
+                if (pgSql.trim().toUpperCase().startsWith('INSERT')) {
+                    pgSql += ' RETURNING *';
+                }
                 const result = await dbInstance.query(pgSql, params);
-                return { lastID: result.insertId || 0, changes: result.rowCount };
+                // In Postgres, returning * makes the first row the newly inserted record
+                const row = result.rows[0];
+                return { 
+                    lastID: row ? (row.runner_id || row.reg_id || row.payment_id || row.id) : 0, 
+                    changes: result.rowCount 
+                };
             } else {
                 const result = await dbInstance.run(sql, params);
                 return result;
