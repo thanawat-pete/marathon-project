@@ -1,6 +1,5 @@
 const sqlite3 = require('sqlite3').verbose();
 const { open } = require('sqlite');
-const { Pool } = require('pg');
 const path = require('path');
 const bcrypt = require('bcrypt');
 
@@ -11,6 +10,7 @@ const connectDB = async () => {
     try {
         if (process.env.DATABASE_URL) {
             // Postgres (Vercel/Production)
+            const { Pool } = require('pg');
             dbInstance = new Pool({
                 connectionString: process.env.DATABASE_URL,
                 ssl: { rejectUnauthorized: false }
