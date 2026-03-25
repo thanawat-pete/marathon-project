@@ -1,13 +1,21 @@
+const jwt = require('jsonwebtoken');
+
 const requireAuth = (req, res, next) => {
-    // Simple mock authentication middleware
-    const token = req.headers.authorization;
+    const authHeader = req.headers.authorization;
     
-    // In a real app, verify JWT here
-    if (token && token === 'Bearer admin-secret-token') {
-        req.user = { role: 'admin' };
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, message: 'Unauthorized. Token required.' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const secret = process.env.JWT_SECRET || 'chombueng-marathon-secret-key';
+
+    try {
+        const decoded = jwt.verify(token, secret);
+        req.user = decoded; // { id, username, role, ... }
         next();
-    } else {
-        res.status(401).json({ success: false, message: 'Unauthorized access. Admin token required.' });
+    } catch (error) {
+        return res.status(401).json({ success: false, message: 'Invalid or expired token.' });
     }
 };
 

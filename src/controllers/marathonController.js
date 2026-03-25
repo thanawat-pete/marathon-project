@@ -11,12 +11,20 @@ const getMarathonInfo = async (req, res) => {
 
 const registerRunner = async (req, res) => {
     try {
-        const registrationData = req.body;
-        // Validate data here...
-        const result = await marathonService.createRegistration(registrationData);
+        const result = await marathonService.createRegistration(req.body);
         res.status(201).json({ success: true, data: result, message: 'Registration successful' });
     } catch (error) {
-        res.status(400).json({ success: false, message: error.message });
+        console.error('Registration Error:', error);
+        res.status(400).json({ success: false, message: error.message || String(error) });
+    }
+};
+
+const getConfig = async (req, res) => {
+    try {
+        const config = await marathonService.getFormConfig();
+        res.json({ success: true, data: config });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -40,6 +48,7 @@ const getDashboardStats = async (req, res) => {
 
 module.exports = {
     getMarathonInfo,
+    getConfig,
     registerRunner,
     getAllRegistrations,
     getDashboardStats

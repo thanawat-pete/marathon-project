@@ -1,10 +1,12 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const { connectDB } = require('./config/db');
 
 // Import routes
 const apiRoutes = require('./routes/api');
 
+const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -13,8 +15,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static frontend files (if needed, e.g. the PHP/HTML ones could be served by Apache/Nginx, or we can serve static HTML from here)
-app.use(express.static('../'));
+// Serve static assets (Relative path for Vercel)
+app.use('/assets', express.static(path.join(__dirname, '../assets')));
 
 // API Routes
 app.use('/api', apiRoutes);
@@ -24,6 +26,14 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', message: 'Chombueng Marathon API is running' });
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+    connectDB().then(() => {
+        app.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}`);
+        });
+    });
+}
+
+// Export for Vercel
+module.exports = app;
