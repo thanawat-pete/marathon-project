@@ -297,9 +297,10 @@
             const form = document.getElementById('registrationForm');
 
             fetch(`${API_BASE_URL}/config`)
-                .then(r => {
-                    if (!r.ok) throw new Error(`Server error: ${r.status}`);
-                    return r.json();
+                .then(async r => {
+                    const res = await r.json();
+                    if (!r.ok) throw new Error(res.message || `Server error: ${r.status}`);
+                    return res;
                 })
                 .then(res => {
                     if(res.success) {
@@ -325,7 +326,9 @@
                     catSelect.innerHTML = `<option value="">-- ไม่สามารถโหลดข้อมูลได้ (${err.message}) --</option>`;
                     msgBox.style.display = 'block';
                     msgBox.style.backgroundColor = '#fee2e2';
-                    msgBox.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์ กรุณาลองใหม่อีกครั้งภายหลัง';
+                    msgBox.style.color = '#991b1b';
+                    msgBox.style.border = '1px solid #ef4444';
+                    msgBox.innerHTML = `<strong>เกิดข้อผิดพลาด:</strong> ${err.message}<br><small>กรุณาตรวจสอบการตั้งค่าฐานข้อมูลหรือลองใหม่อีกครั้ง</small>`;
                 });
 
             form.addEventListener('submit', async (e) => {
